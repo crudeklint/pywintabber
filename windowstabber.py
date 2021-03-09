@@ -1,11 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font as tkfont
-import win32gui
+import win32gui, win32con
 
 class WinTabber():
 
-	tabs = []
+	tab_buttons = []
 	hwndlist = {}
 	captured_hwnds = []
 	pre_rect = [0,0,0,0]
@@ -38,7 +38,16 @@ class WinTabber():
 			return False
 		else: 
 			return True
-		
+	
+	def win_corner_inside( self, main_win_rect, test_win_rect ):
+		a = main_win_rect
+		b = test_win_rect
+
+		if( a[0] > b[0] or a[1] > b[1] or a[2] < b[0] or a[3] < b[1] ):
+			return False
+		else:
+			return True
+	
 	def win_is_inside( self, main_win_rect, test_win_rect ):
 		a = main_win_rect
 		b = test_win_rect
@@ -69,32 +78,57 @@ class WinTabber():
 			if( hwnd == this_hwnd or name in self.SKIPLIST):
 				continue
 			
-			if( self.win_is_inside( a, b ) ):
+			if( self.win_corner_inside( a, b ) and hwnd not in self.captured_hwnds ):
 				# print( name + " is contained in me" )
-				print( hwnd )
+				self.add_window( hwnd )
+				return
+				# print( hwnd )
 			elif( self.win_intersects( a, b ) ):
 				print( name + " intersects me" )
 					
 		
-		self.update_win_position( 1 )
+		# self.update_win_position( 1 )
 		
 		# print( win_coords )
 
+	def add_window( self, hwnd ):
+		tab_buttons = self.tab_buttons
+		windowname = win32gui.GetWindowText( hwnd )
+	
+		self.captured_hwnds.append( hwnd )
+		
+		insert_index = 0 if( len( tab_buttons ) == 1 ) else 1
+		new_button = tk.Button( self.top_frame, text=windowname, command=lambda: self.tab_cb( hwnd ) )
+		
+		tab_buttons.insert( insert_index, new_button )
+		
+		for i in range( 0, len( tab_buttons ) ):
+			tab_buttons[i].grid( row=0, column=i, sticky="ns" )
+			tab_buttons[i]
+	
+		return
 
-	def update_win_position( self, hwnd ):
-		hwnd = 264456
+	def tab_cb( self, hwnd ):
+		win32gui.SetForegroundWindow( hwnd )
+		return
 
+	def update_wins_position( self ):
 		root = self.root
+		bottom_frame = self.bottom_frame
 		
 		win_coords = (
-			root.winfo_x(), 
-			root.winfo_y(),
-			root.winfo_width(),
-			root.winfo_height()
+			bottom_frame.winfo_rootx(), 
+			bottom_frame.winfo_rooty(),
+			bottom_frame.winfo_width(),
+			bottom_frame.winfo_height()
 		)
 
 		a = win_coords
-		win32gui.MoveWindow( hwnd, a[0]+5, a[1]+a[3]+30, a[2]+5, 200, 1 )
+		# win32gui.MoveWindow( hwnd, a[0]+10, a[1]+105, a[2]-5, a[3]-75, 1 )
+		
+		for hwnd in self.captured_hwnds:
+			win32gui.SetWindowPos( hwnd, win32con.HWND_TOPMOST, a[0], a[1], a[2], a[3], int( "0x0010", 0 ) )
+		# win32gui.MoveWindow( hwnd, a[0]+5, a[1]+a[3]+30, a[2]+5, 200, 1 )
 		# win32gui.SetForegroundWindow( hwnd )
 		return
 
@@ -107,52 +141,46 @@ class WinTabber():
 	
 		for i in range( 0, 4 ):
 			if( rect[i] != pre_rect[i] ):
-				self.update_win_position( 1 )
+				self.update_wins_position()
 				return
-
-		
 		
 
 	def gui_show( self ):
 		root = tk.Tk()
 		self.root = root
-		tabs = self.tabs
+		tab_buttons = self.tab_buttons
 		
-		root.geometry( "800x75" )
+		root.attributes("-transparentcolor", "red")
+		
+		font = tkfont.Font( size=14 )
+		
+		root.geometry( "800x900" )
 		root.title("Tab Widget") 
 		
 		# bgcol = ttk.Style()
 		# bgcol.configure( "TFrame", background="red" )
 		
-		button_font = tkfont.Font( size=12 )
+		button_font = tkfont.Font( size=8 )
 		
-		top_frame = ttk.Frame( root, height=50, padding=10 )
-		bottom_frame = ttk.Frame( root )
-
-		capture_button = tk.Button( top_frame, text="Capture active window", font=button_font, command=self.get_captured_windows )
-		capture_button.grid( row=0, column=0, sticky="nsew" )
-		top_frame.columnconfigure( 0, weight=1 )
+		top_frame = tk.Frame( root, height=30, background="red" )
+		bottom_frame = tk.Frame( root )
 		
 		top_frame.grid( row=0, column=0, sticky="nsew" )
 		bottom_frame.grid( row=1, column=0, sticky="nsew" )
+		
+		root.columnconfigure( 0, weight=1  )
+		root.rowconfigure( 1, weight=1  )
 
-		root.columnconfigure( 0, weight=1 )
-		root.rowconfigure( 1, weight=1 )
+		add_button = tk.Button( top_frame, text=" + ", command=self.get_captured_windows, font=font  )
+		add_button.grid( row=0, column=0, sticky="e" )
 		
-		tabControl = ttk.Notebook(bottom_frame) 
-		
-		tabs.append( ttk.Frame(tabControl) )
-		  
-		tabControl.add(tabs[0], text ='Add windows') 
-		tabControl.pack(expand = 1, fill ="both") 
-		  
-		ttk.Label(tabs[0],  
-				  text ="Welcome to GeeksForGeeks").grid(column = 0,  
-									   row = 0, 
-									   padx = 30, 
-									   pady = 30)   
+		tab_buttons.append( add_button )
+
+		self.top_frame = top_frame
+		self.bottom_frame = bottom_frame
 		
 		root.bind( "<Configure>", self.configure_cb )
+
 		
 		root.mainloop()
 
