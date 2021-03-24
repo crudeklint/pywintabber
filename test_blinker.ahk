@@ -1,6 +1,13 @@
-gui, new,, test window
-gui, add, button, gblinkme, Blinka
-gui, show, w300 h200
+Gui, add, edit, vhwnd
+Gui, add, button, gblinker, Blink!
+Gui, show, h300 w300
+return
+
+blinker() {
+	GuiControlGet, value,, hwnd
+	DllCall( "FlashWindow", UInt, value, Int,True )
+
+}
 
 blinkme() {
 	loop, 6 
