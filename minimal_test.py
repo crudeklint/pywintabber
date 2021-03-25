@@ -364,8 +364,10 @@ class Gui():
 
 	def start_listener( self ):
 		global SUB_PROCESS
-
-		listener_process = subprocess.Popen([r"D:\script\pywintabber\test_2.exe"], stdout=subprocess.PIPE)
+		script_folder = os.path.dirname( os.path.abspath( __name__ ) )
+		exe_path = os.path.join( script_folder, "test_2.exe" )
+		
+		listener_process = subprocess.Popen([exe_path], stdout=subprocess.PIPE)
 
 		SUB_PROCESS = listener_process
 
@@ -391,6 +393,8 @@ class Gui():
 		self.tab_buttons[i]["bg"] = "#CC7529"
 		time.sleep(1)
 		self.tab_buttons[i]["bg"] = precolor
+		time.sleep(1)
+		self.tab_buttons[i]["bg"] = "#CC7529"
 
 		return	
 
