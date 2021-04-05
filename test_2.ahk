@@ -1,5 +1,8 @@
 ﻿;@Ahk2Exe-ConsoleApp
 
+#SingleInstance, Off
+#NoTrayIcon
+
 DetectHiddenWindows, On
 Script_Hwnd := WinExist("ahk_class AutoHotkey ahk_pid " DllCall("GetCurrentProcessId"))
 DllCall("RegisterShellHookWindow", "uint", Script_Hwnd)
