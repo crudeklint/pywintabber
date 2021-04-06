@@ -8,7 +8,6 @@ import threading
 import subprocess
 import time
 import inspect
-import easing_functions
 import win32api, win32gui, win32con
 import pywintypes
 
@@ -336,7 +335,7 @@ class Gui():
 
 			for i in range( 0, len( captured_windows ) ):
 				hwnd = captured_windows[i]
-				name = WindowHandler.get_title( hwnd )
+				name = self._rename_title( WindowHandler.get_title( hwnd ) )
 
 				tab_buttons[i].grid(row=0, column=i, padx=(0,Config.button_margin) )
 				tab_buttons[i]["text"] = name
@@ -794,6 +793,19 @@ class Gui():
 		self.root.quit()
 
 		return
+
+	def _rename_title( self, title ):
+		renames = Config.renames
+		for rn in renames:
+			if( not rn in title ):
+				continue
+			
+			pattern = rn
+			replacement = renames[rn]
+			
+			title = title.replace( pattern, replacement )
+			
+		return title
 
 	# Returns the hwnd of the GUI.
 	def __get_gui_hwnd( self ):
