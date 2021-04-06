@@ -8,7 +8,6 @@ import threading
 import subprocess
 import time
 import inspect
-import easing_functions
 import win32api, win32gui, win32con
 import pywintypes
 
@@ -73,7 +72,7 @@ class Config():
 class Gui():
 	root = None
 	captured_windows = []
-	blinking_windows = []
+	blinking_windows = set()
 	captured_pre_geo = {}
 	threads = {}
 	pause_tracking = False
@@ -324,7 +323,7 @@ class Gui():
 			hwnd = captured_windows[i]
 			render_cache.append( WindowHandler.get_title( hwnd ) )
 
-		render_cache.extend( blinking_windows )
+		render_cache.extend( list( blinking_windows ) )
 		render_cache.append( active_window )
 
 		# If any of this data has been changed, we re-render the tab area.
@@ -336,7 +335,7 @@ class Gui():
 
 			for i in range( 0, len( captured_windows ) ):
 				hwnd = captured_windows[i]
-				name = WindowHandler.get_title( hwnd )
+				name = self._rename_title( WindowHandler.get_title( hwnd ) )
 
 				tab_buttons[i].grid(row=0, column=i, padx=(0,Config.button_margin) )
 				tab_buttons[i]["text"] = name
@@ -605,11 +604,11 @@ class Gui():
 	
 		# Blink by setting and unsettnig the blinking window data and letting 
 		# the tab render method handle the changing of the button backgrounds.
-		blinking_windows.append( hwnd )
+		blinking_windows.add( hwnd )
 		time.sleep(1)
-		blinking_windows.remove( hwnd )
+		blinking_windows.discard( hwnd )
 		time.sleep(1)
-		blinking_windows.append( hwnd )
+		blinking_windows.add( hwnd )
 
 		last_blinked_hwnd = hwnd
 
@@ -636,7 +635,7 @@ class Gui():
 
 		# If the to-be active window is blinking, remove blinking status
 		if( hwnd in blinking_windows ):
-			blinking_windows.remove( hwnd )
+			blinking_windows.discard( hwnd )
 
 		# Set the size of the new active window to the same as the last one.
 		WindowHandler.set_size( hwnd, pre_rect )
@@ -794,6 +793,19 @@ class Gui():
 		self.root.quit()
 
 		return
+
+	def _rename_title( self, title ):
+		renames = Config.renames
+		for rn in renames:
+			if( not rn in title ):
+				continue
+			
+			pattern = rn
+			replacement = renames[rn]
+			
+			title = title.replace( pattern, replacement )
+			
+		return title
 
 	# Returns the hwnd of the GUI.
 	def __get_gui_hwnd( self ):
