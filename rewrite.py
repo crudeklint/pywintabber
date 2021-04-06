@@ -72,7 +72,7 @@ class Config():
 class Gui():
 	root = None
 	captured_windows = []
-	blinking_windows = []
+	blinking_windows = set()
 	captured_pre_geo = {}
 	threads = {}
 	pause_tracking = False
@@ -323,7 +323,7 @@ class Gui():
 			hwnd = captured_windows[i]
 			render_cache.append( WindowHandler.get_title( hwnd ) )
 
-		render_cache.extend( blinking_windows )
+		render_cache.extend( list( blinking_windows ) )
 		render_cache.append( active_window )
 
 		# If any of this data has been changed, we re-render the tab area.
@@ -604,11 +604,11 @@ class Gui():
 	
 		# Blink by setting and unsettnig the blinking window data and letting 
 		# the tab render method handle the changing of the button backgrounds.
-		blinking_windows.append( hwnd )
+		blinking_windows.add( hwnd )
 		time.sleep(1)
-		blinking_windows.remove( hwnd )
+		blinking_windows.discard( hwnd )
 		time.sleep(1)
-		blinking_windows.append( hwnd )
+		blinking_windows.add( hwnd )
 
 		last_blinked_hwnd = hwnd
 
@@ -635,7 +635,7 @@ class Gui():
 
 		# If the to-be active window is blinking, remove blinking status
 		if( hwnd in blinking_windows ):
-			blinking_windows.remove( hwnd )
+			blinking_windows.discard( hwnd )
 
 		# Set the size of the new active window to the same as the last one.
 		WindowHandler.set_size( hwnd, pre_rect )

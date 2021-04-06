@@ -1,0 +1,2 @@
+* Sometimes the blinking-flag is not reset when pressing the tab.
+* Function to scroll to clicked button.
