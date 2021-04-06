@@ -1,0 +1,11 @@
+* The GUI still moves to the new window.
+* There is no support for maximized windows.
+* Enable logging.
+* User config.
+* Use system tray.
+* Register hotkeys for ctrl+tab and ctrl+shift+tab to change tabs.
+* The tab-scroll buttons should only be visible while a portion of
+  tabs are not visible.
+    - There should be an indicator that tabs outside of window 
+      region exist.
+* Regex title-replacements.
