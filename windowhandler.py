@@ -23,6 +23,9 @@ class WindowHandler():
 			WindowHandler.make_active( hwnd )
 		return
 	
+	def exists( hwnd ):
+		return win32gui.IsWindow( hwnd )
+
 	def get_size( hwnd ):
 		rect = win32gui.GetWindowRect( hwnd )
 		return rect

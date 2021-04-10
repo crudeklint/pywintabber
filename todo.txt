@@ -9,5 +9,4 @@
     - There should be an indicator that tabs outside of window 
       region exist.
 * Regex title-replacements.
-* Sometimes the blinking-flag is not reset when pressing the tab.
 * Function to scroll to clicked button.

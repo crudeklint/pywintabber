@@ -81,6 +81,7 @@ class Gui():
 	_pre_render_cache = None
 	last_blinked_hwnd = None
 	tab_number_increasing = True
+	active_rect = (0,0,0,0)
 
 	def __init__( self ):
 		global CAPTURED_WINDOWS
@@ -94,9 +95,6 @@ class Gui():
 		self.threads = THREADS
 	
 		self.set_gui_defaults()
-
-		self.show()
-
 		return
 
 	# This method sets the default font and creates a 
@@ -481,6 +479,7 @@ class Gui():
 		idle_sleep_timer = Config.idle_sleep_timer
 		active_sleep_timer = Config.active_sleep_timer
 		idle_threshold = Config.idle_threshold
+		captured_windows = self.captured_windows
 
 		# Get the current method name
 		fname = inspect.currentframe().f_code.co_name
@@ -509,22 +508,28 @@ class Gui():
 
 		active_cursor = False
 
+		first_it = True
+
 		# Use the thread status in the threads dict as a loop terminator.
 		while threads[fname]:
 			# The loop can be paused as well.
 			if( self.pause_tracking ):
 				continue
 
-			active_window = self.active_window
+			if( not WindowHandler.exists( self.active_window ) ): 
+				self._sub_btn_cb()
+				if( len( captured_windows ) == 0 ):
+					break
 
 			# If there is no active window, exit the method.
-			if( active_window == None ):
+			if( self.active_window == None ):
 				break
 
 			now_tick = time.time()
 
 			# Get the current size of the active window.
-			active_rect = WindowHandler.get_size( active_window )
+			active_rect = WindowHandler.get_size( self.active_window )
+			self.active_rect = active_rect
 
 			# Calculate the rectangle for the GUI window.
 			new_x = active_rect[0]+Config.fudge_x
@@ -560,7 +565,10 @@ class Gui():
 
 			# Set the position to the new rectangle and move it below the active window. This is to make sure
 			# that the tab seems connected to the active window.
-			win32gui.SetWindowPos( gui_hwnd, active_window, new_x, new_y, new_w, new_h, win32con.SWP_NOACTIVATE )
+			if( not WindowHandler.exists( gui_hwnd ) ):
+				gui_hwnd = self.__get_gui_hwnd()
+
+			win32gui.SetWindowPos( gui_hwnd, self.active_window, new_x, new_y, new_w, new_h, win32con.SWP_NOACTIVATE )
 
 			# Run the tab-rendering routine.
 			self._render_tabs()
@@ -631,7 +639,8 @@ class Gui():
 		hwnd = self.captured_windows[hwnd_index]
 
 		# Get the window size and position for the current active window.
-		pre_rect = WindowHandler.get_size( self.active_window )
+		# pre_rect = WindowHandler.get_size( self.active_window )
+		pre_rect = self.active_rect
 
 		# If the to-be active window is blinking, remove blinking status
 		if( hwnd in blinking_windows ):
@@ -723,7 +732,7 @@ class Gui():
 			pre_rect[1] += Config.tab_height-1
 			pre_rect[2] += Config.fudge_x
 			pre_rect[3] += Config.fudge_y
-
+			self.active_rect = pre_rect
 
 		# Run the tab-click callback in order to hide all other windows and showing the
 		self._tab_click_cb_threaded( len( captured_windows )-1 )
@@ -766,7 +775,7 @@ class Gui():
 			self._tab_click_cb( last_win_index )
 
 		# Restore the location of the released window and enforce that it is shown.
-		if( hwnd in self.captured_pre_geo ):
+		if( hwnd in self.captured_pre_geo and WindowHandler.exists( hwnd ) ):
 			WindowHandler.set_size( hwnd, self.captured_pre_geo[hwnd] )
 			WindowHandler.show( hwnd )
 
@@ -851,8 +860,11 @@ class Gui():
 
 
 if( __name__ == "__main__" ):
+	thegui = Gui()
+	
+
 	try:
-		thegui = Gui()
+		thegui.show()
 	except KeyboardInterrupt:
 		print( "Recieved crtl+c, exiting" )
 
